@@ -13,7 +13,9 @@ var CTS = {
 var VALORES_LISTA = ["X", "F", "J", "S"];
 
 
-
+//-------------------
+// Hojas por división
+//-------------------
 function crearHojasParaDivisiones() {
   var divisiones = obtenerDivisiones();
   divisiones.forEach(
@@ -23,6 +25,9 @@ function crearHojasParaDivisiones() {
     });
 }
 
+//-----------------------
+// Encabezados con fechas
+//-----------------------
 function configurarInicialSheets() {
   var divisiones = obtenerDivisiones();
   divisiones.forEach(
@@ -78,12 +83,85 @@ function AgregarFechasHeader(sheet, division) {
   return fechasCombinadas.length;
 }
 
+
+function obtenerFechasParaDivision(nombreLista) {
+  var temp = obtenerTemplateParaLista(nombreLista);
+  if (!temp || !temp.checklists || temp.checklists.length == 0) {
+    return cargarFechasAnio(CTS.year);
+  }
+  var check = temp.checklists[0];
+  var fechas = [];
+  for (var i = 0; i < check.checkItems.length; i++) {
+    fechas[i] = {
+      nombre: check.checkItems[i].name,
+      completada: check.checkItems[i].state == "complete",
+    };
+  }
+  return fechas;
+}
+
+function obtenerTemplateParaLista(nombreLista) {
+  var templates = getAvailableTemplates();
+  if (templates && templates.length == 0)
+    return null;
+  else if (templates.length == 1 && templates[0].isForAllCards == true)
+    return templates[0];
+  else {
+    for (var i = 0; i < templates.length; i++)
+      if (nombreLista && templates[i].name.trim() === nombreLista.trim())
+        return templates[i];
+    var defecto = templates.filter(
+      function (x) {
+        return CTS.defaultTemplate.toLowerCase() == x.name.toLowerCase()
+      });
+    if (defecto && defecto.length > 0)
+      return defecto[0];
+  }
+  return null;
+}
+
+function cargarFechasAnio(year) {
+  year = +year;
+  var month = 2;//Marzo
+  var day = 30;
+  var now = new Date();
+  var dates = [];
+  var d = new Date(year, month, day);
+  while (d.getMonth() < now.getMonth() || (d.getMonth() == now.getMonth() && d.getDate() <= now.getDate())) {
+    dates.push({
+      nombre: dateToString(d),
+      completada: false
+    }
+    );
+    d = new Date(year, month, day += 7);
+  }
+  return dates;
+}
+
+
+//----------------------------------
+// Cargar niños a las divisiones
+//----------------------------------
 function sincronizarDivisiones() {
   var divisiones = obtenerDivisiones();
   divisiones.forEach(function (x) {
     sincronizarDivision(x);
   });
 }
+
+function obtenerDivisiones() {
+  var cache = CacheService.getDocumentCache();
+  var listasString = cache.get("listas");
+  let listas = listasString ? JSON.parse(listasString) : [];
+  if (!listas) {
+    listas = listsForBoard(false);
+    //Se queda con las que no están en la lista ignorar
+    listas = listas.filter(function (x) { return CTS.ignorar.indexOf(x.name) === -1 });
+    cache.put("listas", JSON.stringify(listas), 300);
+  }
+  return listas;
+}
+
 
 function sincronizarDivision(lista) {
   var division = lista.name.toString();
@@ -123,55 +201,10 @@ function sincronizarDivision(lista) {
 
 
 
-function obtenerDivisiones() {
-  var cache = CacheService.getDocumentCache();
-  var listasString = cache.get("listas");
-  let listas = listasString ? JSON.parse(listasString) : [];
-  if (!listas) {
-    listas = listsForBoard(false);
-    //Se queda con las que no están en la lista ignorar
-    listas = listas.filter(function (x) { return CTS.ignorar.indexOf(x.name) === -1 });
-    cache.put("listas", JSON.stringify(listas), 300);
-  }
-  return listas;
-}
 
-function obtenerFechasParaDivision(nombreLista) {
-  var temp = obtenerTemplateParaLista(nombreLista);
-  if (!temp || !temp.checklists || temp.checklists.length == 0) {
-    return cargarFechasAnio(CTS.year);
-  }
-  var check = temp.checklists[0];
-  var fechas = [];
-  for (var i = 0; i < check.checkItems.length; i++) {
-    fechas[i] = {
-      nombre: check.checkItems[i].name,
-      completada: check.checkItems[i].state == "complete",
-    };
-  }
-  return fechas;
-}
-
-function obtenerTemplateParaLista(nombreLista) {
-  var templates = getAvailableTemplates();
-  if (templates && templates.length == 0)
-    return null;
-  else if (templates.length == 1 && templates[0].isForAllCards == true)
-    return templates[0];
-  else {
-    for (var i = 0; i < templates.length; i++)
-      if (nombreLista && templates[i].name.trim() === nombreLista.trim())
-        return templates[i];
-    var defecto = templates.filter(
-      function (x) {
-        return CTS.defaultTemplate.toLowerCase() == x.name.toLowerCase()
-      });
-    if (defecto && defecto.length > 0)
-      return defecto[0];
-  }
-  return null;
-}
-
+//------------------------
+// Cargar asistencias 
+//------------------------
 
 function sincronizarListas() {
   var divisiones = obtenerDivisiones();
@@ -232,37 +265,3 @@ function sincronizarFecha(sheetRow, checkList, cellValue, date) {
   }
 }
 
-function syncChecklistItems(card, templateChecklist, matchingChecklist) {
-  /*for (var i = 0; i < templateChecklist.checkItems.length; i++) {
-    var checkItemFound = false;
-    for (var j = 0;
-         (j < matchingChecklist.checkItems.length && !checkItemFound); j++) {
-      if (matchingChecklist.checkItems[j].name == templateChecklist.checkItems[i].name) {
-        checkItemFound = true;
-        if (templateChecklist.checkItems[i].state == "complete")
-          deleteChecklistItem(matchingChecklist.id, matchingChecklist.checkItems[j].id);
-      }
-      if (templateChecklist.checkItems[i].state == "incomplete" && !checkItemFound)
-        addChecklistItem(matchingChecklist.id, templateChecklist.checkItems[i].name);
-    }
-  }
-  */
-}
-
-function cargarFechasAnio(year) {
-  year = +year;
-  var month = 2;//Marzo
-  var day = 30;
-  var now = new Date();
-  var dates = [];
-  var d = new Date(year, month, day);
-  while (d.getMonth() < now.getMonth() || (d.getMonth() == now.getMonth() && d.getDate() <= now.getDate())) {
-    dates.push({
-      nombre: dateToString(d),
-      completada: false
-    }
-    );
-    d = new Date(year, month, day += 7);
-  }
-  return dates;
-}

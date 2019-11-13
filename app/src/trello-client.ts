@@ -73,21 +73,6 @@ function getBackupData(boardID, data) {
   }
 }
 
-function getTemplateForCard(card, templates) {
-  if (templates && templates.length == 0)
-      return [];
-  else if (templates.length == 1 && templates[0].isForAllCards == true)
-      return templates[0];
-  for (var i = 0; i < templates.length; i++)
-    if (card.list && templates[i].name.trim() === card.list.name.trim())
-    return templates[i];
-  var defaultTemplate = templates.filter(function(x){x.name.toString().indexOf(CTS.defaultTemplate)===0});
-  if (defaultTemplate && defaultTemplate.length > 0)
-    return defaultTemplate[0];
-  return [];
-}
-
-
 function getAvailableTemplates() {
   var url = constructTrelloURL("cards/" + CacheService.getScriptCache().get("cardId") + "?lists=all&checklists=all&attachments=true");
   var resp = UrlFetchApp.fetch(url, {

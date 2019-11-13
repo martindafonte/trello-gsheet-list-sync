@@ -1,11 +1,6 @@
 //---------------------------------
 //Funciones principales
 //-----------------------------------
-function pimpCardsNow() {
-    addMissingThings();
-    Browser.msgBox("Cards on board have been pimped!");
-}
-
 function addMissingThings() {
     var error = checkControlValues(true, true);
     if (error != "") {
@@ -92,3 +87,34 @@ function getMatchingCheckList(name, card) {
 }
 
 
+function getTemplateForCard(card, templates) {
+    if (templates && templates.length == 0)
+        return [];
+    else if (templates.length == 1 && templates[0].isForAllCards == true)
+        return templates[0];
+    for (var i = 0; i < templates.length; i++)
+      if (card.list && templates[i].name.trim() === card.list.name.trim())
+      return templates[i];
+    var defaultTemplate = templates.filter(function(x){x.name.toString().indexOf(CTS.defaultTemplate)===0});
+    if (defaultTemplate && defaultTemplate.length > 0)
+      return defaultTemplate[0];
+    return [];
+  }
+
+
+  function syncChecklistItems(card, templateChecklist, matchingChecklist) {
+    /*for (var i = 0; i < templateChecklist.checkItems.length; i++) {
+      var checkItemFound = false;
+      for (var j = 0;
+           (j < matchingChecklist.checkItems.length && !checkItemFound); j++) {
+        if (matchingChecklist.checkItems[j].name == templateChecklist.checkItems[i].name) {
+          checkItemFound = true;
+          if (templateChecklist.checkItems[i].state == "complete")
+            deleteChecklistItem(matchingChecklist.id, matchingChecklist.checkItems[j].id);
+        }
+        if (templateChecklist.checkItems[i].state == "incomplete" && !checkItemFound)
+          addChecklistItem(matchingChecklist.id, templateChecklist.checkItems[i].name);
+      }
+    }
+    */
+  }

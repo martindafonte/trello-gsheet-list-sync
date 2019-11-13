@@ -1,6 +1,7 @@
 /// <reference path="card-template-service.ts" />
 /// <reference path="format-utils.ts" />
 /// <reference path="trello-client.ts" />
+/// <reference path="card-template-service.ts" />
 
 // ------------------------------------------------------------------------------------
 // Functions to process Webapp requests:
