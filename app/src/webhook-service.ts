@@ -91,7 +91,7 @@ function registerWebhook() {
     //------------------------------
 
     var error = checkControlValues(false, true);
-    var trelloUrl = constructTrelloURL("webhooks/?callbackURL=" + encodeURIComponent(url) + "&idModel=" + CacheService.getPrivateCache().get("boardId").trim());
+    var trelloUrl = constructTrelloURL("webhooks/?callbackURL=" + encodeURIComponent(url) + "&idModel=" + CacheService.getScriptCache().get("boardId").trim());
     //UrlFetchApp is a google app script tool
     var resp = UrlFetchApp.fetch(trelloUrl, {
         "method": "post",
@@ -122,7 +122,7 @@ function deleteWebhooks() {
 
     for (var i = 0; i < webhooks.length; i++) {
 
-        var url = "https://trello.com/1/token/" + CacheService.getPrivateCache().get("token") + "/webhooks/" + webhooks[i].id + "?key=" + CacheService.getPrivateCache().get("appKey");
+        var url = "https://trello.com/1/token/" + CacheService.getScriptCache().get("token") + "/webhooks/" + webhooks[i].id + "?key=" + CacheService.getScriptCache().get("appKey");
         var resp = UrlFetchApp.fetch(url, {
             "method": "delete"
         });
@@ -133,8 +133,8 @@ function deleteWebhooks() {
     }
 
     if (webhooks.length == 0) {
-        Browser.msgBox("No webhooks found registered against token " + CacheService.getPrivateCache().get("token"));
+        Browser.msgBox("No webhooks found registered against token " + CacheService.getScriptCache().get("token"));
     } else {
-        Browser.msgBox(webhooks.length + " webhook(s) found for token " + CacheService.getPrivateCache().get("token") + " and " + deleteCount + " successfully deleted.");
+        Browser.msgBox(webhooks.length + " webhook(s) found for token " + CacheService.getScriptCache().get("token") + " and " + deleteCount + " successfully deleted.");
     }
 }

@@ -1,9 +1,4 @@
-function testCall(){
-  var listas = listsForBoard();
-  var cards = cardsForList(listas[0], false);
-  Logger.log(cards[0]);
-}
-
+/// <reference path="./format-utils.ts" />
 function addStateToCheckItem(cardId, checkItemId, state){
   var url = constructTrelloURL("cards/" + cardId + "/checkItem/"+checkItemId+"?state=" + encodeURIComponent(state));
   var resp = UrlFetchApp.fetch(url, {
@@ -94,7 +89,7 @@ function getTemplateForCard(card, templates) {
 
 
 function getAvailableTemplates() {
-  var url = constructTrelloURL("cards/" + CacheService.getPrivateCache().get("cardId") + "?lists=all&checklists=all&attachments=true");
+  var url = constructTrelloURL("cards/" + CacheService.getScriptCache().get("cardId") + "?lists=all&checklists=all&attachments=true");
   var resp = UrlFetchApp.fetch(url, {
     "method": "get",
     "muteHttpExceptions": true
@@ -110,7 +105,7 @@ function getAvailableTemplates() {
   }
   // If couldn't find a card, then try a list:
   else {
-    var url = constructTrelloURL("lists/" + CacheService.getPrivateCache().get("cardId") + "/cards?checklists=all&attachments=true&list=true");
+    var url = constructTrelloURL("lists/" + CacheService.getScriptCache().get("cardId") + "/cards?checklists=all&attachments=true&list=true");
     var resp = UrlFetchApp.fetch(url, {
       "method": "get"
     });
@@ -127,24 +122,24 @@ function getAvailableTemplates() {
 }
 
 function constructTrelloURL(baseURL) {
-  if(!CacheService.getPrivateCache().get("appKey") || !CacheService.getPrivateCache().get("token")){
+  if(!CacheService.getScriptCache().get("appKey") || !CacheService.getScriptCache().get("token")){
     checkControlValues(true, true);
   }
   if (baseURL.indexOf("?") == -1) {
-    return "https://trello.com/1/" + baseURL + "?key=" + CacheService.getPrivateCache().get("appKey") + "&token=" + CacheService.getPrivateCache().get("token");
+    return "https://trello.com/1/" + baseURL + "?key=" + CacheService.getScriptCache().get("appKey") + "&token=" + CacheService.getScriptCache().get("token");
   } else {
-    return "https://trello.com/1/" + baseURL + "&key=" + CacheService.getPrivateCache().get("appKey") + "&token=" + CacheService.getPrivateCache().get("token");
+    return "https://trello.com/1/" + baseURL + "&key=" + CacheService.getScriptCache().get("appKey") + "&token=" + CacheService.getScriptCache().get("token");
   }
 }
 
 function getWebhooksForToken() {
   
-  var url = "https://trello.com/1/token/" + CacheService.getPrivateCache().get("token") + "/webhooks?key=" + CacheService.getPrivateCache().get("appKey");
+  var url = "https://trello.com/1/token/" + CacheService.getScriptCache().get("token") + "/webhooks?key=" + CacheService.getScriptCache().get("appKey");
   var resp = UrlFetchApp.fetch(url, {
     "method": "get"
   });
-  return webhooks = JSON.parse(resp.getContentText());
-  
+  let webhooks = JSON.parse(resp.getContentText());
+  return webhooks;
 }
 
 function listCurrentUserBoards() {
@@ -171,7 +166,7 @@ function listsForBoard(archivadas) {
     Browser.msgBox("ERROR:Values in the Control sheet have not been set. Please fix the following error:\n " + error);
     return [];
   }
-  var url = constructTrelloURL("boards/" + CacheService.getPrivateCache().get("boardId") + "/lists?filter="+ (archivadas?"all": "open"));
+  var url = constructTrelloURL("boards/" + CacheService.getScriptCache().get("boardId") + "/lists?filter="+ (archivadas?"all": "open"));
   var resp = UrlFetchApp.fetch(url, {
     "method": "get"
   });
@@ -179,9 +174,9 @@ function listsForBoard(archivadas) {
   return values;
 }
 
-function cardsForList(list, checklists){
-  checklists = checklists? "all" : "none";
-  var url = constructTrelloURL("lists/" + list.id + "/cards?checklists="+checklists+"&attachments=false&list=true");
+function cardsForList(list, checklists = false){
+  let checklistQueryString = checklists? "all" : "none";
+  var url = constructTrelloURL("lists/" + list.id + "/cards?checklists="+checklistQueryString+"&attachments=false&list=true");
   var resp = UrlFetchApp.fetch(url, {
     "method": "get"
   });
@@ -204,25 +199,25 @@ function checkControlValues(requireCard, requireBoard) {
     if (appKey == "") {
         return "App Key not found";
     }
-    CacheService.getPrivateCache().put("appKey", appKey,21600);
+    CacheService.getScriptCache().put("appKey", appKey,21600);
     var token = col[1][0].toString().trim();
     if (token == "") {
         return "Token not found";
     }
-    CacheService.getPrivateCache().put("token", token,21600);
+    CacheService.getScriptCache().put("token", token,21600);
     if (requireBoard) {
         var bid = col[2][0].toString().trim();
         if (bid == "") {
             return "Board ID not found";
         }
-        CacheService.getPrivateCache().put("boardId", bid,21600);
+        CacheService.getScriptCache().put("boardId", bid,21600);
     }
     if (requireCard) {
         var lid = col[3][0].toString().trim();
         if (lid == "") {
             return "Template Card Id not found";
         }
-        CacheService.getPrivateCache().put("cardId", lid,21600);
+        CacheService.getScriptCache().put("cardId", lid,21600);
     }
     PropertiesService.getUserProperties().setProperty("logPost", col[7][0].toString().trim());
     return "";

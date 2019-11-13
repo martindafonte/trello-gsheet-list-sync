@@ -13,7 +13,7 @@ function addMissingThings() {
         return;
     }
     // Get Data 
-    var allData = getBackupData(CacheService.getPrivateCache().get("boardId"), "?cards=open&card_attachments=true&lists=open&card_checklists=all");
+    var allData = getBackupData(CacheService.getScriptCache().get("boardId"), "?cards=open&card_attachments=true&lists=open&card_checklists=all");
 
     if (allData === null) {
         sendError("Unable to retrieve board card data - Pimping Aborted");
@@ -42,7 +42,7 @@ function checkAllCards(cards, lists) {
 function processCard(card, templateCard, actionType) {
     var addDescription = false;
     // Don't process template card
-    if (card.id == templateCard.id || !templateCard.id || card.idList == CacheService.getPrivateCache().get("cardId")) {
+    if (card.id == templateCard.id || !templateCard.id || card.idList == CacheService.getScriptCache().get("cardId")) {
         return;
     }
     if (actionType == "updateCard") {
