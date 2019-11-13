@@ -1,0 +1,11 @@
+{
+  "name": "lista-villa",
+  "version": "1.0.0",
+  "description": "Utilitario para sincronizar listas de asistencia entre Trello y Google Sheets",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Martín Da Fonte",
+  "license": "ISC"
+}
