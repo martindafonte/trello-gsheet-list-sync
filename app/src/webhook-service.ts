@@ -1,3 +1,7 @@
+/// <reference path="card-template-service.ts" />
+/// <reference path="format-utils.ts" />
+/// <reference path="trello-client.ts" />
+
 // ------------------------------------------------------------------------------------
 // Functions to process Webapp requests:
 // ------------------------------------------------------------------------------------
@@ -37,12 +41,6 @@ function doPost(data) {
     return x;
 
 }
-
-function test_processCardFromWebhook() {
-
-    processCardFromWebhook("xxxxxxxxxxxxxxxxxxxx", "moveCard");
-}
-
 
 function processCardFromWebhook(cardId, actionType) {
 
