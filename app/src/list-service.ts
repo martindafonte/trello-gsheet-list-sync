@@ -18,11 +18,7 @@ var VALORES_LISTA = ["X", "F", "J", "S"];
 //-------------------
 function crearHojasParaDivisiones() {
   var divisiones = obtenerDivisiones();
-  divisiones.forEach(
-    function (div) {
-      Logger.log(div.name);
-      crearSheet(div.name.toString());
-    });
+  divisiones.forEach(d => crearEncontrarSheet(d.name));
 }
 
 //-----------------------
@@ -30,48 +26,42 @@ function crearHojasParaDivisiones() {
 //-----------------------
 function configurarInicialSheets() {
   var divisiones = obtenerDivisiones();
-  divisiones.forEach(
-    function (div) {
-      inicializarSheet(div);
-    });
+  divisiones.forEach(d => inicializarSheet(d));
 }
 
 function inicializarSheet(lista) {
   checkControlValues(true, true);
   var division = lista.name.toString();
-  var sheet = crearSheet(division);
+
+  //Creo el sheet y aplico formato
+  var sheet = crearEncontrarSheet(division);
   sheet.setFrozenRows(1);
   sheet.setFrozenColumns(2);
   crearEncabezado(sheet);
   //Oculto la columna de id de trello
   sheet.hideColumns(CTS.cols.id + 1);
+
+  //Cargo las fechas  
   var cantFechas = AgregarFechasHeader(sheet, division);
   var dateRange = sheet.getRange(2, CTS.cols.fechas + 1, 100, cantFechas);
   var rule = SpreadsheetApp.newDataValidation().requireValueInList(VALORES_LISTA, true).build();
+  //Agregar formato condicional en base a los valores permitidos de asistencia
   dateRange.setDataValidation(rule);
-  //Agregar formato condicional en base a los valores
 }
 
 
 function AgregarFechasHeader(sheet, division) {
   var fechas = obtenerFechasParaDivision(division);
-  var valores = sheet.getRange(1, CTS.cols.fechas + 1, 1, fechas.length * 2).getValues()[0];
-  fechas = fechas.map(function (x) {
-    if (x.nombre) return x.nombre;
-  });
-  valores = valores.map(function (x) {
-    if (x) {
-      if (x instanceof Date) return x;
-      else return parseDate(x);
-    }
-  });
-  var fechasCombinadas = combineOrderedArrays(valores, fechas);
-  var fechasCombinadas = fechasCombinadas.map(function (x) { return dateToString(x); });
-  var valoresSheet = valores.map(function (x) { if (x) return dateToString(x); });
+  var sheet_range = sheet.getRange(1, CTS.cols.fechas + 1, 1, fechas.length * 2).getValues()[0];
+  let fechas_name = fechas.map(x => x.nombre || '');
+  let valores_sheet = sheet_range.map((x: any) => dateToString(x));
+  var fechasCombinadas = combineOrderedArrays(valores_sheet, fechas_name);
+  // var fechasCombinadas = fechasCombinadas.map(function (x) { return dateToString(x); });
+  // var valoresSheet = valores_sheet.map(function (x) { if (x) return dateToString(x); });
   var indice_sheet = 0;
   //Agrego las columnas para los valores que se agregaron en el medio
   for (var i = 0; i < fechasCombinadas.length; i++) {
-    if (valoresSheet[indice_sheet] == fechasCombinadas[i])
+    if (valores_sheet[indice_sheet] == fechasCombinadas[i])
       indice_sheet++;
     else
       //Agrego una columna
@@ -83,11 +73,14 @@ function AgregarFechasHeader(sheet, division) {
   return fechasCombinadas.length;
 }
 
-
-function obtenerFechasParaDivision(nombreLista) {
+/**
+ * Retorna la lista de fechas que corresponden al template de la división
+ * @param nombreLista Nombre de la lista en Trello
+ */
+function obtenerFechasParaDivision(nombreLista): Array<{ nombre: string, completada: boolean }> {
   var temp = obtenerTemplateParaLista(nombreLista);
   if (!temp || !temp.checklists || temp.checklists.length == 0) {
-    return cargarFechasAnio(CTS.year);
+    return generarFechasAño(CTS.year);
   }
   var check = temp.checklists[0];
   var fechas = [];
@@ -120,8 +113,8 @@ function obtenerTemplateParaLista(nombreLista) {
   return null;
 }
 
-function cargarFechasAnio(year) {
-  year = +year;
+function generarFechasAño(year_string) {
+  let year = +year_string;
   var month = 2;//Marzo
   var day = 30;
   var now = new Date();
@@ -153,7 +146,7 @@ function obtenerDivisiones() {
   var cache = CacheService.getDocumentCache();
   var listasString = cache.get("listas");
   let listas = listasString ? JSON.parse(listasString) : [];
-  if (!listas) {
+  if (!listas || listas.length == 0) {
     listas = listsForBoard(false);
     //Se queda con las que no están en la lista ignorar
     listas = listas.filter(function (x) { return CTS.ignorar.indexOf(x.name) === -1 });
@@ -165,7 +158,7 @@ function obtenerDivisiones() {
 
 function sincronizarDivision(lista) {
   var division = lista.name.toString();
-  var sheet = crearSheet(division);
+  var sheet = crearEncontrarSheet(division);
   var kids = cardsForList(lista, false).filter(function (x) { return x.name.indexOf("AA_") == -1 && x.name != division; });
   var sheet_values = sheet.getRange(2, 1, kids.length * 2, CTS.cols.id + 1).getValues();
   var sheet_id = sheet_values.map(function (x) { return x[CTS.cols.id]; }).filter(function (x) { return x; });
@@ -215,40 +208,40 @@ function sincronizarListas() {
 }
 
 function sincronizarLista(division) {
-  var sheet = crearSheet(division.name);
+  var sheet = crearEncontrarSheet(division.name);
   var fechasTemplate = obtenerFechasParaDivision(division.name);
+  //tarjetas excepto divisiones y filtradas
   var tCards = cardsForList(division, true).filter(function (x) { return x.name.indexOf("AA_") == -1; });
   var range = sheet.getRange(1, 1, 100, 50);
   var kids = range.getValues();
-  var fechasHeader = kids[0].slice(CTS.cols.fechas).map(function (x) { if (x) return dateToString(x); });
-  for (var i = 1; i < kids.length && kids[i][0]; i++) {
-    var kid = kids[i];
+  //Me quedo con las fechas
+  var fechasHeader = kids[0].slice(CTS.cols.fechas).map((x: any) => dateToString(x));
+  for (var row = 1; row < kids.length && kids[row][0]; row++) {
+    var kid = kids[row];
     var tKid = tCards.filter(function (x) { return x.id == kid[CTS.cols.id]; })[0];
     if (!tKid)
       logPost("No existe el niño en : " + division.name + " " + kid);
     else {
       var lista = tKid.checklists.filter(function (x) { return x.name == CTS.year; })[0];
-      if (lista)
-        for (var f = CTS.cols.fechas; f < kid.length && kids[0][f]; f++) {
-          var fechaTemplate = fechasTemplate.filter(function (x) { return x.nombre == fechasHeader[f - CTS.cols.fechas]; });
-          if (fechaTemplate && fechaTemplate.length > 0 && fechaTemplate[0].completada)
-            kid[f] = 'S';
-          else {
-            var newValue = sincronizarFecha(kid, lista, kid[f], dateToString(kids[0][f]));
-            if (newValue) {
-              kids[i][f] = newValue;
-            }
-          }
+      if (!lista)
+        continue;
+      for (var col = CTS.cols.fechas; col < kid.length && kids[0][col]; col++) {
+        var fechaTemplate = fechasTemplate.filter(x => compararFechasString(x.nombre, fechasHeader[col - CTS.cols.fechas]))[0];
+        var newValue = fechaTemplate && fechaTemplate.completada ? 'S' : sincronizarFecha(kid, lista, kid[col], dateToString(kids[0][col]));
+        if (newValue) {
+          kids[row][col] = newValue;
+          Logger.log("Fecha %s %s %s", kid[CTS.cols.nombre], dateToString(kids[0][col]), newValue);
         }
+      }
     }
   }
   range.setValues(kids);
 }
 
 function sincronizarFecha(sheetRow, checkList, cellValue, date) {
-  var checkItem = checkList.checkItems.filter(function (x) { return x.name == date; })[0];
+  var checkItem = checkList.checkItems.filter(x => compararFechasString(x.name, date))[0];
   if (cellValue) {
-    var asistencia = cellValue == "X" ? true : false;
+    //var asistencia = cellValue == "X" ? true : false;
     /* COMENTADO PARA NO ACTUALIZAR TRELLO
     if(checkItem){
       if(checkItem.state == "complete" && !asistencia)
@@ -258,10 +251,14 @@ function sincronizarFecha(sheetRow, checkList, cellValue, date) {
         
     }*/
     return cellValue;
-  } else {
-    if (checkItem && checkItem.state == "complete") {
-      return "X";
-    }
+  } else if (checkItem && checkItem.state == "complete") {
+    return "X";
   }
+}
+
+function compararFechasString(f1, f2) {
+  let s1 = dateToString(f1).toLowerCase();
+  let s2 = dateToString(f2).toLowerCase();
+  return s1.length > s2.length ? s1.indexOf(s2) >= 0 : s2.indexOf(s1) >= 0;
 }
 

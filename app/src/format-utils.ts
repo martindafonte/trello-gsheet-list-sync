@@ -54,10 +54,10 @@ function parseDate(s) {
   return new Date(p[2], months[p[1].toLowerCase()], p[0], 0, 0, 0);
 }
 
-function dateToString(d) {
-  if (!d || !d.getDate)
-    return d;
-  return d.getDate().toString() + "-" + monthString[d.getMonth()] + "-" + d.getFullYear().toString();
+function dateToString(d): string {
+  if (d && d instanceof Date)
+    return d.getDate().toString() + "-" + monthString[d.getMonth()] + "-" + d.getFullYear().toString();
+  return d.toString();
 }
 
 function combineOrderedArrays(arrayUno, arrayDos) {
@@ -106,7 +106,7 @@ function getQueryVariable(url, variable) {
   return "";
 }
 
-function crearSheet(name) {
+function crearEncontrarSheet(name) {
   var ss = SpreadsheetApp.openById(PropertiesService.getUserProperties().getProperty("ssId"));
   var sheet = ss.getSheetByName(name);
   if (sheet == null) {
@@ -125,7 +125,7 @@ function crearSheet(name) {
  * @param {*} data 
  */
 function logPost(data) {
-  var sheet = crearSheet("Logging");
+  var sheet = crearEncontrarSheet("Logging");
   sheet.appendRow([new Date(), data]);
 }
 
