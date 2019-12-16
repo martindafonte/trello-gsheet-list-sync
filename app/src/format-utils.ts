@@ -1,11 +1,12 @@
 var months = {
-  jan: 0, feb: 1, mar: 2, apr: 3, may: 4, jun: 5,
-  jul: 6, aug: 7, sep: 8, oct: 9, nov: 10, dec: 11
+  ene: 0, jan: 0, feb: 1, mar: 2, abr: 3, apr: 3, may: 4, jun: 5,
+  jul: 6, aug: 7, ago: 7, set: 8, sep: 8, oct: 9, nov: 10, dec: 11, dic: 11,
+  getMonthIndex: (x: string): number => this[(x || '').toLowerCase().slice(0, 3)]
 };
 var monthString = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 
 var GENEROS = ["Varon", "Mujer"];
-var BARRIOS = ["8 de Marzo", "Km 19", "Km 20", "Monarca", "Paso Hondo"];
+var BARRIOS = ["8 de Marzo", "Km 19", "Km 20", "Monarca", "Paso Hondo", "Los Zorzales"];
 var APELL_ESP = ["da", "de", "del", "el", "la", "los"];
 
 
@@ -49,9 +50,9 @@ function parseLabels(labels) {
 }
 
 
-function parseDate(s) {
+function parseDate(s: string) {
   var p = s.split('-');
-  return new Date(p[2], months[p[1].toLowerCase()], p[0], 0, 0, 0);
+  return new Date(+p[2], months.getMonthIndex(p[1]), +p[0], 0, 0, 0);
 }
 
 function dateToString(d): string {
@@ -60,35 +61,44 @@ function dateToString(d): string {
   return d.toString();
 }
 
-function combineOrderedArrays(arrayUno, arrayDos) {
-  var nuevoValor = [];
+/**
+ * Agrega los elementos de dos arreglos intentando mantener el orden del primero
+ * @param arrayUno Arreglo principal
+ * @param arrayDos Arreglo secundario, agregar al final del primero
+ */
+function combineOrderedArrays(arrayUno: Array<string>, arrayDos: Array<string>): Array<string> {
+  var nuevoArreglo = [];
   var i_uno = 0;
   var i_nuevo = 0;
+  for (let i_uno = 0; i_uno < arrayUno.length; i_uno++) {
+    const element = arrayUno[i_uno];
+
+  }
   for (var i_dos = 0; i_dos < arrayDos.length; i_dos++) {
     while (arrayUno[i_uno] && arrayUno[i_uno] < arrayDos[i_dos]) {
-      nuevoValor[i_nuevo] = arrayUno[i_uno];
+      nuevoArreglo[i_nuevo] = arrayUno[i_uno];
       i_uno++;
       i_nuevo++;
     }
     if (!arrayUno[i_uno]) {
-      nuevoValor[i_nuevo] = arrayDos[i_dos];
+      nuevoArreglo[i_nuevo] = arrayDos[i_dos];
       i_nuevo++;
     } else if (+arrayUno[i_uno] == +arrayDos[i_dos]) {
-      nuevoValor[i_nuevo] = arrayDos[i_dos];
+      nuevoArreglo[i_nuevo] = arrayDos[i_dos];
       i_uno++;
       i_nuevo++;
     } else { //es más grande
       //sheet.addColumn();
-      nuevoValor[i_nuevo] = arrayDos[i_dos];
+      nuevoArreglo[i_nuevo] = arrayDos[i_dos];
       i_nuevo++;
     }
   }
   if (i_uno < arrayUno.length)
     for (var i = i_uno; i < arrayUno.length && arrayUno[i]; i++) {
-      nuevoValor[i_nuevo] = arrayUno[i_uno];
+      nuevoArreglo[i_nuevo] = arrayUno[i_uno];
       i_nuevo++;
     }
-  return nuevoValor;
+  return nuevoArreglo;
 }
 
 

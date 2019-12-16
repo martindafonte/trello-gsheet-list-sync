@@ -53,7 +53,7 @@ function inicializarSheet(lista) {
 function AgregarFechasHeader(sheet, division) {
   var fechas = obtenerFechasParaDivision(division);
   var sheet_range = sheet.getRange(1, CTS.cols.fechas + 1, 1, fechas.length * 2).getValues()[0];
-  let fechas_name = fechas.map(x => x.nombre || '');
+  let fechas_name = fechas.map(x => dateToString(x.nombre || ''));
   let valores_sheet = sheet_range.map((x: any) => dateToString(x));
   var fechasCombinadas = combineOrderedArrays(valores_sheet, fechas_name);
   // var fechasCombinadas = fechasCombinadas.map(function (x) { return dateToString(x); });
